@@ -1,4 +1,6 @@
 import re
+import os
+import traceback
 import requests
 from time import sleep
 from plyer import notification
@@ -15,7 +17,6 @@ def notify(title, message):
     except NotImplementedError:
         print(f"通知功能不可用：{title} - {message}")
 
-    # print(response.text)
 
 
 class AutoLoginCAN:
@@ -36,20 +37,28 @@ class AutoLoginCAN:
         # toaster = ToastNotifier()
         while True:
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            response = requests.get(self.can_url)
-            # 正则字符串寻找登录状态标识符
-            pattern = re.compile("<title>(.*?)</title>", re.S)
-            title   = re.findall(pattern, response.text)[0]
-            # 处于未登录状态时：执行登录操作
-            if title == "上网登录页":
-                response_code = requests.get(can_login_url).status_code
 
-                if response_code == 200:
-                    notify("登录成功", "您已成功登录校园网！")
-                    print(f"{timestamp} 登录成功...")
-            else:
-                # toaster.show_toast("已处于登录状态", duration=5)
-                print(f"{timestamp} 已处于登录状态...")
+            try:
+                with open("logs/heartbeat.log", "a") as heartbeat:
+                    heartbeat.write(f'Heartbeat at {timestamp}\n')
+
+                response = requests.get(self.can_url)
+                # 正则字符串寻找登录状态标识符
+                pattern = re.compile("<title>(.*?)</title>", re.S)
+                title   = re.findall(pattern, response.text)[0]
+                # 处于未登录状态时：执行登录操作
+                if title == "上网登录页":
+                    response_code = requests.get(can_login_url).status_code
+
+                    if response_code == 200:
+                        notify("登录成功", "您已成功登录校园网！")
+                        print(f"{timestamp} 登录成功...")
+                else:
+                    print(f"{timestamp} 已处于登录状态...")
+            except Exception as e:
+                print(f"{timestamp} 错误: {e}")
+                with open(f"logs/{timestamp}_error.log", "w") as log_file:
+                    log_file.write(f"Error at {timestamp}:\n{traceback.format_exc()}\n\n")
             # 每分钟检查一次
             sleep(60)
 

@@ -25,6 +25,14 @@ def get_logs_path():
         os.makedirs(logs_path)
     return logs_path
 
+
+def log_error(message):
+    log_dir = get_logs_path()
+    log_path = os.path.join(log_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
+    with open(log_path, "w") as log_file:
+        log_file.write(f"Error at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}:\n{message}\n\n")
+
+
 class AutoLoginCAN:
     def __init__(self, username, password):
         self.username = username
@@ -57,12 +65,15 @@ class AutoLoginCAN:
                         print(f"{timestamp} 登录成功...")
                 else:
                     print(f"{timestamp} 已处于登录状态...")
+            except requests.exceptions.Timeout:
+                # 处理超时
+                print(f"{timestamp} 网络请求超时，稍后重试...")
+                log_error("网络请求超时")
             except Exception as e:
+                # 处理其他异常
                 print(f"{timestamp} 错误: {e}")
-                log_dir = get_logs_path()
-                log_path = os.path.join(log_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
-                with open(log_path, "w") as log_file:
-                    log_file.write(f"Error at {timestamp}:\n{traceback.format_exc()}\n\n")
+                log_error(traceback.format_exc())
+
             # 每分钟检查一次
             sleep(60)
 

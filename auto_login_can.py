@@ -17,13 +17,20 @@ def notify(title, message):
     except NotImplementedError:
         print(f"通知功能不可用：{title} - {message}")
 
-
+def get_logs_path():
+    """如果logs文件夹不存在，则创建文件夹"""
+    base_path = os.path.abspath(".")
+    logs_path = os.path.join(base_path, "logs")
+    if not os.path.exists(logs_path):
+        os.makedirs(logs_path)
+    return logs_path
 
 class AutoLoginCAN:
     def __init__(self, username, password):
         self.username = username
         self.password = password
         self.can_url = "http://192.168.4.1/"
+        self.can_login_url = "http://192.168.4.1/drcom/login?callback=dr1003&DDDDD="+self.username+"&upass="+self.password+"&0MKKey=123456&R1=0&R2=&R3=0&R5=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.2.1&v=6705&lang=zh"
 
     """
         未登录前的登录状态标识符：< title >上网登录页< / title >
@@ -33,22 +40,17 @@ class AutoLoginCAN:
     """
     def login(self):
         # 校园网登录的url，直接在浏览器里输入这个字符串就可以登陆
-        can_login_url = "http://192.168.4.1/drcom/login?callback=dr1003&DDDDD="+self.username+"&upass="+self.password+"&0MKKey=123456&R1=0&R2=&R3=0&R5=0&R6=0&para=00&v6ip=&terminal_type=1&lang=zh-cn&jsVersion=4.2.1&v=6705&lang=zh"
-        # toaster = ToastNotifier()
         while True:
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
             try:
-                with open("logs/heartbeat.log", "a") as heartbeat:
-                    heartbeat.write(f'Heartbeat at {timestamp}\n')
-
                 response = requests.get(self.can_url)
                 # 正则字符串寻找登录状态标识符
                 pattern = re.compile("<title>(.*?)</title>", re.S)
                 title   = re.findall(pattern, response.text)[0]
                 # 处于未登录状态时：执行登录操作
                 if title == "上网登录页":
-                    response_code = requests.get(can_login_url).status_code
+                    response_code = requests.get(self.can_login_url).status_code
 
                     if response_code == 200:
                         notify("登录成功", "您已成功登录校园网！")
@@ -57,7 +59,9 @@ class AutoLoginCAN:
                     print(f"{timestamp} 已处于登录状态...")
             except Exception as e:
                 print(f"{timestamp} 错误: {e}")
-                with open(f"logs/{timestamp}_error.log", "w") as log_file:
+                log_dir = get_logs_path()
+                log_path = os.path.join(log_dir, f"{datetime.now().strftime('%Y%m%d%H%M%S')}.log")
+                with open(log_path, "w") as log_file:
                     log_file.write(f"Error at {timestamp}:\n{traceback.format_exc()}\n\n")
             # 每分钟检查一次
             sleep(60)

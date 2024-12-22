@@ -1,7 +1,6 @@
 import json
 import auto_login_can
 
-
 if __name__ == '__main__':
 
     # 打开用户信息文件，读取用户名和密码

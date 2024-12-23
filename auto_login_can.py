@@ -47,7 +47,6 @@ class AutoLoginCAN:
         若为“未登录”状态，则调用can_login_url登录，并在第一次登录时提示toast：登录成功
     """
     def login(self):
-        # 校园网登录的url，直接在浏览器里输入这个字符串就可以登陆
         while True:
             timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -76,4 +75,30 @@ class AutoLoginCAN:
 
             # 每分钟检查一次
             sleep(60)
+
+    def login_once(self):
+        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        try:
+            response = requests.get(self.can_url)
+            # 正则字符串寻找登录状态标识符
+            pattern = re.compile("<title>(.*?)</title>", re.S)
+            title = re.findall(pattern, response.text)[0]
+            # 处于未登录状态时：执行登录操作
+            if title == "上网登录页":
+                response_code = requests.get(self.can_login_url).status_code
+
+                if response_code == 200:
+                    notify("登录成功", "您已成功登录校园网！")
+                    print(f"{timestamp} 登录成功...")
+            else:
+                print(f"{timestamp} 已处于登录状态...")
+        except requests.exceptions.Timeout:
+            # 处理超时
+            print(f"{timestamp} 网络请求超时，稍后重试...")
+            log_error("网络请求超时")
+        except Exception as e:
+            # 处理其他异常
+            print(f"{timestamp} 错误: {e}")
+            log_error(traceback.format_exc())
 

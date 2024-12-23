@@ -29,3 +29,10 @@ pyinstaller --onefile --hidden-import plyer.platforms.win.notification main_sche
 ## Windows上开机自动执行脚本
 - 进入`dist`目录下，给当前的可执行程序`main_scheduler.exe`创建一个快捷方式，然后按下组合键`Win+R`，输入`shell:startup`，进入【启动】文件夹。
 - 将`dist`目录下生成的快捷方式拷贝到【启动】文件夹下，即可实现开机自启。
+
+## 测试
+从2024-12-22 20:09开始运行
+![img.png](assets/demo_start.png)
+
+运行至2024-12-23 19:09依然正常。
+![img.png](assets/demo_end.png)
